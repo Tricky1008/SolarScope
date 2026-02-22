@@ -2,6 +2,12 @@
 
 > A full-stack AI + GIS web platform that estimates rooftop solar energy potential using OpenStreetMap building data, NASA POWER irradiance, and a PVLib simulation engine.
 
+![SolarScope](https://img.shields.io/badge/SOLARSCOPE-V1.0-FF6B1A?style=for-the-badge&logo=sun&logoColor=white)
+![React](https://img.shields.io/badge/REACT-18-0A84FF?style=for-the-badge&logo=react&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FASTAPI-0.104-14b8a6?style=for-the-badge&logo=fastapi&logoColor=white)
+![Supabase](https://img.shields.io/badge/SUPABASE-PG15-22c55e?style=for-the-badge&logo=supabase&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBOOST-AI-a855f7?style=for-the-badge&logo=scikit-learn&logoColor=white)
+
 ---
 
 ## 📸 What It Does
