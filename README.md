@@ -83,7 +83,7 @@ python3 -m venv venv
 
 # Activate it
 source venv/bin/activate          # Linux/Mac
-# venv\Scripts\activate           # Windows
+venv\Scripts\activate           # Windows
 
 # Install all Python packages
 pip install -r requirements.txt
