@@ -1,0 +1,433 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Token CSS Custom Properties ── */
+:root {
+  /* Brand */
+  --color-brand-primary: #FF6B1A;
+  --color-brand-secondary: #0A84FF;
+  --color-brand-accent: #FF9A5C;
+
+  /* Surfaces */
+  --color-bg-base: #0D1B2A;
+  --color-bg-surface: #132236;
+  --color-bg-raised: #1E3550;
+
+  /* Borders */
+  --color-border: #4A7FA5;
+  --color-border-subtle: #1E3550;
+
+  /* Text */
+  --color-text-primary: #E8F4FD;
+  --color-text-secondary: #8BA7C2;
+  --color-text-muted: #A0AEC0;
+
+  /* Semantic */
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Animation */
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 350ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-card: 20px;
+  --radius-pill: 40px;
+  --radius-cta: 50px;
+}
+
+/* ── Base Reset ── */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg-base);
+    color: var(--color-text-primary);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus ring — Solar Orange, 3px + 2px offset */
+  :focus-visible {
+    outline: 3px solid var(--color-brand-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(255, 107, 26, 0.3);
+    color: #fff;
+  }
+}
+
+/* ── Utility Classes ── */
+@layer components {
+
+  /* JetBrains Mono numeric values */
+  .font-data {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Solar Orange gradient text */
+  .text-gradient-solar {
+    background: linear-gradient(135deg, #FF6B1A 0%, #FF9A5C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass panel effect */
+  .glass {
+    background: rgba(19, 34, 54, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(74, 127, 165, 0.2);
+  }
+
+  /* Skeleton loading shimmer */
+  .skeleton {
+    background: linear-gradient(90deg,
+        var(--color-bg-raised) 0%,
+        rgba(74, 127, 165, 0.15) 50%,
+        var(--color-bg-raised) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: var(--radius-md);
+  }
+
+  /* Card hover lift */
+  .card-hover {
+    transition: transform var(--duration-normal) var(--ease-standard),
+      box-shadow var(--duration-normal) var(--ease-standard);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Button press */
+  .btn-press:active {
+    transform: scale(0.97);
+    transition: transform var(--duration-fast) var(--ease-standard);
+  }
+
+  /* Deep shadow for dock/panels */
+  .shadow-deep {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Slide over reveal animation for the auth page */
+  @keyframes slide-over-reveal {
+    0% {
+      transform: translateX(100vw);
+    }
+
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-over-reveal {
+    animation: slide-over-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+/* ── Orbital Ring Animations (FlowSelectionScreen) ── */
+.orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 26, 0.12);
+}
+
+.orbital-ring-1 {
+  width: 300px;
+  height: 300px;
+  animation: orbit-spin 20s linear infinite;
+}
+
+.orbital-ring-2 {
+  width: 480px;
+  height: 480px;
+  border-color: rgba(10, 132, 255, 0.08);
+  animation: orbit-spin 30s linear infinite reverse;
+}
+
+.orbital-ring-3 {
+  width: 640px;
+  height: 640px;
+  border-color: rgba(255, 107, 26, 0.05);
+  animation: orbit-spin 40s linear infinite;
+}
+
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 107, 26, 0.4);
+  border-radius: 50%;
+  animation: particle-float 8s ease-in-out infinite;
+}
+
+@keyframes particle-float {
+
+  0%,
+  100% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+    transform: translateY(80vh) scale(1);
+  }
+
+  90% {
+    opacity: 0.6;
+    transform: translateY(10vh) scale(0.6);
+  }
+}
+
+/* ── Leaflet Dark Theme Overrides ── */
+.leaflet-container {
+  background: var(--color-bg-base) !important;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.dark-map-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+.leaflet-control-zoom a {
+  background: var(--color-bg-surface) !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border-subtle) !important;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--color-bg-raised) !important;
+  color: var(--color-brand-primary) !important;
+}
+
+.leaflet-bar {
+  border: 1px solid var(--color-border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--color-bg-surface) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--color-bg-surface) !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--color-text-secondary) !important;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-raised);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-primary);
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   Applied when <html class="light">
+   ═══════════════════════════════════════════════════════ */
+html.light {
+  --color-bg-base: #F4F6FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-raised: #E8ECF0;
+  --color-border: #CBD5E1;
+  --color-border-subtle: #E2E8F0;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+}
+
+/* Light mode body */
+html.light body {
+  background: #F4F6FA;
+  color: #0F172A;
+}
+
+/* Invert key hardcoded dark backgrounds for light mode */
+html.light .bg-\[\#060B12\] {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-\[\#0A111C\] {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-\[\#0b1423\] {
+  background-color: #F4F6FA !important;
+}
+
+html.light .bg-\[\#0A111C\]\/60 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+html.light .bg-\[\#0A111C\]\/80 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.light .bg-\[\#0A111C\]\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html.light .bg-\[\#060B12\]\/80 {
+  background-color: rgba(248, 250, 252, 0.92) !important;
+}
+
+html.light .bg-\[\#060B12\]\/60 {
+  background-color: rgba(248, 250, 252, 0.85) !important;
+}
+
+/* Light mode borders */
+html.light .border-\[\#1E3550\] {
+  border-color: #E2E8F0 !important;
+}
+
+html.light .border-\[\#1E3550\]\/50 {
+  border-color: rgba(226, 232, 240, 0.6) !important;
+}
+
+/* Light mode text overrides */
+html.light .text-white {
+  color: #0F172A !important;
+}
+
+html.light .text-gray-300 {
+  color: #334155 !important;
+}
+
+html.light .text-gray-400 {
+  color: #64748B !important;
+}
+
+html.light .text-gray-500 {
+  color: #94A3B8 !important;
+}
+
+html.light .text-gray-600 {
+  color: #CBD5E1 !important;
+}
+
+/* Light mode dock bar */
+html.light .bg-midnight\/70 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Light mode scrollbar */
+html.light ::-webkit-scrollbar-track {
+  background: #F4F6FA;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+
+/* Light mode map tiles */
+html.light .leaflet-container {
+  filter: none !important;
+}
+
+/* Light mode backdrop adjustments */
+html.light .backdrop-blur-2xl {
+  backdrop-filter: blur(40px) saturate(1.2);
+}
+
+html.light .backdrop-blur-xl {
+  backdrop-filter: blur(24px) saturate(1.2);
+}
+
+html.light .backdrop-blur-md {
+  backdrop-filter: blur(12px) saturate(1.1);
+}
+
+/* Light mode shadows */
+html.light .shadow-\[0_20px_60px_-15px_rgba\(0\,0\,0\,0\.7\)\] {
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .shadow-\[0_4px_20px_-5px_rgba\(0\,0\,0\,0\.5\)\] {
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light .shadow-\[0_0_30px_rgba\(0\,0\,0\,0\.5\)\] {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.04) !important;
+}
