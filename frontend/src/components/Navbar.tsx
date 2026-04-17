@@ -1,10 +1,10 @@
-import { Sun, Settings, Zap, LogOut, User, PlusCircle, Map, Target } from 'lucide-react';
+import { Sun, Settings, Zap, LogOut, User, PlusCircle, Map, Target, Home } from 'lucide-react';
 import React, { useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import { useAuthStore } from '../store/authStore';
 import SearchBar from './SearchBar';
 import AuthModal from './AuthModal';
-import { Dock, DockItem } from './Docker';
+import { Dock, DockItem, DockSeparator } from './Docker';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -45,11 +45,11 @@ export default function Navbar() {
 
       <AuthModal />
 
-      {/* Bottom Floating Dock */}
-      <div className="absolute bottom-6 left-0 right-0 z-sticky flex justify-center pointer-events-none">
-        <div className="pointer-events-auto">
+      {/* Bottom Floating Dock — always visible */}
+      <div className="fixed left-0 right-0 z-[9999] flex justify-center pointer-events-none" style={{ bottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}>
+        <div className="pointer-events-auto max-w-[95vw] overflow-x-auto">
           <Dock>
-            {/* Logo / Home Button */}
+            {/* Logo / Brand */}
             <DockItem
               icon={(props: any) => (
                 <div className="w-full h-full bg-gradient-to-br from-solar-orange to-solar-orange-lt rounded-[min(100%,1rem)] flex items-center justify-center text-white">
@@ -57,14 +57,23 @@ export default function Navbar() {
                 </div>
               )}
               label="SolarScope"
-              onClick={() => setActiveFlow('choice')}
-              isActive={activeFlow === 'choice'}
+              onClick={() => {
+                setActiveFlow('landing');
+                reset();
+              }}
+              isActive={false}
             />
 
             {/* Separator */}
-            <div className="w-[1px] h-full bg-divider mx-2" />
+            <DockSeparator />
 
-            {/* Core Maps/Input Flow */}
+            {/* Core Navigation */}
+            <DockItem
+              icon={Home}
+              label="Home"
+              onClick={() => setActiveFlow('choice')}
+              isActive={activeFlow === 'choice'}
+            />
             <DockItem
               icon={Map}
               label="Map View"
@@ -75,15 +84,7 @@ export default function Navbar() {
               isActive={activeFlow === 'map' && !isSearchOpen}
             />
 
-            <DockItem
-              icon={Target}
-              label="Search Location"
-              onClick={() => {
-                setActiveFlow('map');
-                setIsSearchOpen(!isSearchOpen);
-              }}
-              isActive={isSearchOpen}
-            />
+
 
             <DockItem
               icon={PlusCircle}
@@ -93,7 +94,7 @@ export default function Navbar() {
             />
 
             {/* Separator */}
-            <div className="w-[1px] h-full bg-divider mx-2" />
+            <DockSeparator />
 
             {/* User & Settings */}
             <DockItem

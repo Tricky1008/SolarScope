@@ -1,8 +1,9 @@
-import { X, Download, Loader, AlertCircle, Zap, Sun, DollarSign, Leaf, BarChart2, TrendingUp, TreePine, Trophy, Bot, Ruler } from 'lucide-react';
+import { X, Download, Loader, AlertCircle, Zap, Sun, IndianRupee, Leaf, BarChart2, TrendingUp, TreePine, Trophy, Bot, Ruler, Compass } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScoreGauge from './ScoreGauge';
 import MonthlyChart from './MonthlyChart';
+import RoofMaskOverlay from './RoofMaskOverlay';
 
 // Framer Motion Variants for Staggered Entrance
 const container = {
@@ -44,6 +45,7 @@ export default function AnalysisPanel() {
   const {
     analysis, isCalculating, calculationError,
     setPanelOpen, selectedBuilding, setReportOpen,
+    imageAnalysisResult, uploadedImageSrc
   } = useAppStore();
 
 
@@ -52,15 +54,17 @@ export default function AnalysisPanel() {
 
   const currency = analysis?.currency ?? 'INR';
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   return (
     <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
+      initial={isMobile ? { y: '100%' } : { x: '-100%' }}
+      animate={{ x: 0, y: 0 }}
+      exit={isMobile ? { y: '100%' } : { x: '-100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       role="complementary"
       aria-label="Solar analysis results"
-      className="w-full sm:w-[450px] h-full bg-[#060B12]/80 backdrop-blur-2xl border-l border-[#1E3550] flex flex-col overflow-hidden z-[1000] relative shadow-[-20px_0_60px_-15px_rgba(0,0,0,0.7)]"
+      className="w-full sm:w-[450px] h-[70vh] sm:h-full mt-auto sm:mt-0 pointer-events-auto bg-[#060B12]/80 backdrop-blur-2xl border-t sm:border-t-0 sm:border-r border-[#1E3550] rounded-t-3xl sm:rounded-none flex flex-col overflow-hidden z-[1000] relative shadow-[0_-10px_60px_-15px_rgba(0,0,0,0.7)] sm:shadow-[20px_0_60px_-15px_rgba(0,0,0,0.7)]"
     >
       {/* Panel Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-[#1E3550] shrink-0 bg-[#0A111C]/60">
@@ -114,16 +118,19 @@ export default function AnalysisPanel() {
         )}
 
         {/* Error */}
-        {!isCalculating && calculationError && (
-          <div className="flex items-start gap-3 bg-error/10 border border-error/30 rounded-card p-5 animate-fade-in">
-            <AlertCircle size={18} className="text-error mt-0.5 shrink-0" />
-            <div>
-              <p className="text-error font-semibold">Analysis Failed</p>
-              <p className="text-text-secondary text-sm mt-1">{calculationError}</p>
-              <p className="text-text-muted text-xs mt-2">Make sure the backend is running on port 8000.</p>
+        {!isCalculating && calculationError && (() => {
+          const isNetworkError = calculationError.toLowerCase().includes('failed to fetch') || calculationError.toLowerCase().includes('network error') || calculationError.toLowerCase().includes('unreachable');
+          return (
+            <div className="flex items-start gap-3 bg-error/10 border border-error/30 rounded-card p-5 animate-fade-in">
+              <AlertCircle size={18} className="text-error mt-0.5 shrink-0" />
+              <div>
+                <p className="text-error font-semibold">{isNetworkError ? 'Backend Unreachable' : 'Calculation Error'}</p>
+                <p className="text-text-secondary text-sm mt-1">{calculationError}</p>
+                {isNetworkError && <p className="text-text-muted text-xs mt-2">Make sure the backend is running on port 8000.</p>}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Results */}
         {!isCalculating && analysis && (
@@ -163,7 +170,7 @@ export default function AnalysisPanel() {
                 color="text-[#FF6B1A]"
               />
               <MetricCard
-                icon={DollarSign}
+                icon={IndianRupee}
                 label="Savings"
                 value={`${currency} ${fmt(analysis.annual_savings)}`}
                 sub="per year"
@@ -247,6 +254,51 @@ export default function AnalysisPanel() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Image Analysis Metadata */}
+            {analysis.prediction_source === 'model_image' && (
+              <motion.div
+                whileHover={{ y: -2, scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="bg-[#0A111C]/60 backdrop-blur-md border border-[#1E3550] border-l-[#0A84FF] border-l-4 rounded-2xl overflow-hidden hover:border-[#0A84FF]/50 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.5)]"
+              >
+                {imageAnalysisResult && uploadedImageSrc && (
+                  <div className="p-4 border-b border-[#1E3550] bg-black/20">
+                    <RoofMaskOverlay
+                      originalSrc={uploadedImageSrc}
+                      maskSrc={imageAnalysisResult.mask_bytes ?? ''}
+                      result={imageAnalysisResult}
+                    />
+                  </div>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Compass size={16} className="text-[#0A84FF]" />
+                    <p className="text-[#0A84FF] text-sm font-semibold tracking-wide">Extracted Geometry</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-[#060B12] rounded-lg p-2 border border-[#1E3550] text-center">
+                      <p className="text-gray-500 text-[10px] uppercase font-mono mb-1">Orientation</p>
+                      <p className="text-white text-xs font-bold">{analysis.roof_orientation || 'Unknown'}</p>
+                    </div>
+                    <div className="bg-[#060B12] rounded-lg p-2 border border-[#1E3550] text-center">
+                      <p className="text-gray-500 text-[10px] uppercase font-mono mb-1">Tilt</p>
+                      <p className="text-white text-xs font-bold">{analysis.roof_tilt_degrees ? `${analysis.roof_tilt_degrees}°` : 'Unknown'}</p>
+                    </div>
+                    <div className="bg-[#060B12] rounded-lg p-2 border border-[#1E3550] text-center">
+                      <p className="text-gray-500 text-[10px] uppercase font-mono mb-1">Shading</p>
+                      <p className="text-white text-xs font-bold">{analysis.shading_factor != null ? `${(analysis.shading_factor * 100).toFixed(0)}%` : 'Unknown'}</p>
+                    </div>
+                  </div>
+                  {analysis.model_confidence && (
+                    <div className="mt-3 flex justify-between items-center text-xs">
+                      <span className="text-gray-500 font-mono">Detection Confidence</span>
+                      <span className="text-lime-400 font-mono font-bold">{(analysis.model_confidence * 100).toFixed(1)}%</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
             {/* ML Model Predictions */}
             {analysis.ml_predictions && analysis.ml_predictions.predictions.length > 0 && (
@@ -340,9 +392,15 @@ export default function AnalysisPanel() {
               {analysis.prediction_source && (
                 <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${analysis.prediction_source === 'ml_model'
                   ? 'bg-[#FF6B1A]/10 text-[#FF6B1A]'
-                  : 'bg-[#0A84FF]/10 text-[#0A84FF]'
+                  : analysis.prediction_source === 'model_image'
+                    ? 'bg-lime-500/10 text-lime-400'
+                    : 'bg-[#0A84FF]/10 text-[#0A84FF]'
                   }`}>
-                  {analysis.prediction_source === 'ml_model' ? <><Bot size={12} className="inline mr-0.5" /> ML Predicted</> : <><Ruler size={12} className="inline mr-0.5" /> Formula Based</>}
+                  {analysis.prediction_source === 'ml_model'
+                    ? <><Bot size={12} className="inline mr-0.5" /> ML Predicted</>
+                    : analysis.prediction_source === 'model_image'
+                      ? <><Compass size={12} className="inline mr-0.5" /> Image Analysis</>
+                      : <><Ruler size={12} className="inline mr-0.5" /> Formula Based</>}
                 </span>
               )}
             </div>

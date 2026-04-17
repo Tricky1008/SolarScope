@@ -97,6 +97,13 @@ class SolarAnalysisResponse(BaseModel):
     ml_predicted_kwh: Optional[float] = None
     pvlib_kwh: Optional[float] = None
     prediction_source: str = "formula"
+    
+    # Image analysis specific fields (optional)
+    roof_orientation: Optional[str] = None
+    roof_tilt_degrees: Optional[float] = None
+    shading_factor: Optional[float] = None
+    model_confidence: Optional[float] = None
+    mask_bytes: Optional[str] = None
 
 
 class BatchCalculationRequest(BaseModel):
@@ -109,3 +116,32 @@ class HealthResponse(BaseModel):
     database: str
     cache: str
     version: str = "1.0.0"
+
+class ImageAnalysisResponse(BaseModel):
+    id: str
+    lat: float
+    lon: float
+    solar_score: int
+    total_roof_area_m2: float
+    usable_area_m2: float
+    num_panels: int
+    system_capacity_kwp: float
+    annual_generation_kwh: float
+    monthly_generation: List[MonthlyGeneration]
+    annual_savings: float
+    installation_cost: float
+    payback_years: float
+    npv_25yr: float
+    co2_annual_kg: float
+    trees_equivalent: int
+    currency: str
+    roof_orientation: Optional[str] = None
+    roof_tilt_degrees: Optional[float] = None
+    shading_factor: Optional[float] = None
+    obstructions: List[str] = []
+    irradiance: IrradianceData
+    created_at: datetime
+    prediction_source: str = "model_image"
+    model_name: Optional[str] = None
+    model_confidence: Optional[float] = None
+    mask_bytes: Optional[str] = None  # Base64 encoded string

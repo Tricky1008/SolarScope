@@ -36,7 +36,7 @@ export default function FlowSelectionScreen() {
     }, []);
 
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden min-h-screen bg-[#060B12] font-['DM_Sans',sans-serif] ss-root pb-24">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden min-h-[100dvh] bg-[#060B12] font-['DM_Sans',sans-serif] ss-root pb-24">
             {/* BEAUTIFUL MINIMAL BACKGROUND IMAGE */}
             <div className="absolute inset-0 pointer-events-none z-0"
                 style={{

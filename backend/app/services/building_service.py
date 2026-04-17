@@ -128,6 +128,22 @@ async def geocode_address(address: str) -> Optional[dict]:
         print(f"Geocoding error: {e}")
     return None
 
+async def reverse_geocode_address(lat: float, lon: float) -> Optional[str]:
+    """Convert lat/lon to address string using Nominatim."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"lat": lat, "lon": lon, "format": "json"},
+                headers={"User-Agent": "SolarScope/1.0"}
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("display_name", "Unknown address")
+    except Exception as e:
+        print(f"Reverse geocoding error: {e}")
+        return "Unknown address"
+
 
 def create_dummy_building(lat: float, lon: float, area_m2: float = 80.0) -> Dict[str, Any]:
     """Create a synthetic building footprint when OSM has no data."""

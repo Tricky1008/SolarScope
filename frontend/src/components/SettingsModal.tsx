@@ -1,22 +1,58 @@
 import { useState } from 'react';
-import { X, Settings, User, Moon, Sun, LogOut, Shield, Bell, ChevronRight, Palette, Sliders, DollarSign } from 'lucide-react';
+import { X, Settings, User, Moon, Sun, LogOut, Shield, Bell, Palette, Lock, Key, RefreshCw, Laptop } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type Tab = 'profile' | 'appearance' | 'calculations';
+type Tab = 'profile' | 'appearance' | 'security';
 
 const SPRING = { type: 'spring', stiffness: 400, damping: 30 } as any;
 
 export default function SettingsModal() {
-  const { setSettingsOpen, electricityTariff, costPerKwp, currency, updateSettings,
-    roofLength, roofWidth, roofArea, panelDirection, roofTiltAngle,
-    panelEfficiency, panelWattPeak, usabilityFactor,
-  } = useAppStore();
+  const { setSettingsOpen, updateSettings } = useAppStore();
   const { user, signOut } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [notificationsEnabled, setNotifications] = useState(true);
+  const [privacyEnabled, setPrivacy] = useState(false);
+  const [otpEnabled, setOtpEnabled] = useState(false);
+
+  const getDeviceInfo = () => {
+    const ua = navigator.userAgent;
+    let browser = "Unknown Browser";
+    let os = "Unknown OS";
+
+    if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("SamsungBrowser")) browser = "Samsung Browser";
+    else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+    else if (ua.includes("Trident")) browser = "Internet Explorer";
+    else if (ua.includes("Edge") || ua.includes("Edg")) browser = "Edge";
+    else if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Safari")) browser = "Safari";
+
+    if (ua.includes("Win")) os = "Windows";
+    else if (ua.includes("Mac")) os = "macOS";
+    else if (ua.includes("X11")) os = "UNIX";
+    else if (ua.includes("Linux")) os = "Linux";
+    else if (ua.includes("Android")) os = "Android";
+    else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+
+    return `${browser} on ${os}`;
+  };
+
+  const deviceInfo = getDeviceInfo();
+
+  const isDark = theme === 'dark';
+  const bgBase = isDark ? 'bg-[#060B12]' : 'bg-gray-50';
+  const bgSurface = isDark ? 'bg-[#0A111C]' : 'bg-white';
+  const textPrim = isDark ? 'text-white' : 'text-gray-900';
+  const textSec = isDark ? 'text-gray-400' : 'text-gray-700'; // Darker for light mode visibility
+  const textSubtle = isDark ? 'text-gray-500' : 'text-gray-600'; // Darker for light mode visibility
+  const borderCls = isDark ? 'border-[#1E3550]' : 'border-gray-200';
+  const borderSubtle = isDark ? 'border-[#1E3550]/50' : 'border-gray-200';
+  const hoverBorder = isDark ? 'hover:border-gray-500' : 'hover:border-gray-400';
+  const hoverBg = isDark ? 'hover:bg-[#0A111C]/50' : 'hover:bg-gray-100';
 
   const directionOptions = [
     { value: 'south', label: 'South (Optimal)' },
@@ -30,7 +66,7 @@ export default function SettingsModal() {
   const tabs: { id: Tab; icon: any; label: string }[] = [
     { id: 'profile', icon: User, label: 'Profile' },
     { id: 'appearance', icon: Palette, label: 'Appearance' },
-    { id: 'calculations', icon: Sliders, label: 'Calculations' },
+    { id: 'security', icon: Lock, label: 'Security' },
   ];
 
   const userInitials = user?.email
@@ -44,16 +80,16 @@ export default function SettingsModal() {
     : 'Unknown';
 
   /* shared input class */
-  const inputCls = `w-full bg-[#060B12] border border-[#1E3550] rounded-xl px-4 py-3 text-white text-sm font-mono
+  const inputCls = `w-full ${bgBase} ${borderCls} rounded-xl px-4 py-3 ${textPrim} text-sm font-mono
                      focus:outline-none focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/25 transition-all duration-300
-                     placeholder:text-gray-600`;
+                     placeholder:${textSubtle}`;
   const selectCls = inputCls;
-  const labelCls = 'block text-gray-400 text-xs mb-2 font-semibold uppercase tracking-wider';
-  const hintCls = 'text-gray-600 text-[11px] mt-1.5 font-mono';
+  const labelCls = `block ${textSec} text-xs mb-2 font-semibold uppercase tracking-wider`;
+  const hintCls = `text-gray-600 text-[11px] mt-1.5 font-mono`;
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#060B12]/80 backdrop-blur-2xl"
+      className={`fixed inset-0 z-[9999] flex items-center justify-center ${isDark ? 'bg-[#060B12]/80' : 'bg-white/60'} backdrop-blur-2xl`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
@@ -63,27 +99,27 @@ export default function SettingsModal() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 20 }}
         transition={SPRING}
-        className="bg-[#0A111C]/90 backdrop-blur-xl border border-[#1E3550] rounded-3xl w-full max-w-2xl mx-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] max-h-[90vh] flex flex-col overflow-hidden relative"
+        className={`${isDark ? 'bg-[#0A111C]/90' : 'bg-white/95'} backdrop-blur-xl border ${borderCls} rounded-3xl w-full max-w-2xl mx-4 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] max-h-[90vh] flex flex-col overflow-hidden relative`}
       >
         {/* Top accent line */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#0A84FF]/50 to-transparent opacity-50" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-[#1E3550] shrink-0">
+        <div className={`flex items-center justify-between px-8 py-6 border-b ${borderCls} shrink-0`}>
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-gradient-to-br from-[#0A84FF]/20 to-[#0A84FF]/5 rounded-xl border border-[#0A84FF]/20">
               <Settings size={20} className="text-[#0A84FF]" />
             </div>
             <div>
-              <h2 id="settings-title" className="text-white font-extrabold text-xl tracking-wide" style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.04em' }}>
+              <h2 id="settings-title" className={`${textPrim} font-extrabold text-xl tracking-wide`} style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.04em' }}>
                 SETTINGS & PROFILE
               </h2>
-              <p className="text-gray-500 text-sm font-mono mt-0.5">Manage your account & preferences</p>
+              <p className={`${textSec} text-sm font-mono mt-0.5`}>Manage your account & preferences</p>
             </div>
           </div>
           <button
             onClick={() => setSettingsOpen(false)}
-            className="p-2.5 rounded-full bg-[#060B12] text-gray-400 hover:text-white border border-[#1E3550] transition-all duration-300 hover:border-gray-500"
+            className={`p-2.5 rounded-full ${bgBase} ${textSec} hover:${textPrim} border ${borderCls} transition-all duration-300 ${hoverBorder}`}
             aria-label="Close settings"
           >
             <X size={18} />
@@ -91,14 +127,14 @@ export default function SettingsModal() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 px-8 py-3 border-b border-[#1E3550]/50 shrink-0 bg-[#060B12]/30">
+        <div className={`flex items-center gap-1 px-8 py-3 border-b ${borderSubtle} shrink-0 ${isDark ? 'bg-[#060B12]/30' : 'bg-gray-50/50'}`}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => setActiveTab(tab.id as Tab)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${activeTab === tab.id
                   ? 'bg-[#0A84FF]/15 text-[#0A84FF] border border-[#0A84FF]/30 shadow-[0_0_10px_rgba(10,132,255,0.15)]'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-[#0A111C]/50 border border-transparent'
+                  : `${textSec} hover:${textPrim} ${hoverBg} border border-transparent`
                 }`}
             >
               <tab.icon size={16} />
@@ -121,7 +157,7 @@ export default function SettingsModal() {
                 className="space-y-8"
               >
                 {/* User Card */}
-                <div className="bg-[#060B12]/80 border border-[#1E3550] rounded-2xl p-6 relative overflow-hidden">
+                <div className={`${bgBase} border ${borderCls} rounded-2xl p-6 relative overflow-hidden`}>
                   {/* Decorative orb */}
                   <div className="absolute -top-16 -right-16 w-40 h-40 bg-[#0A84FF]/10 rounded-full blur-3xl pointer-events-none" />
                   <div className="flex items-center gap-5 relative z-10">
@@ -130,13 +166,13 @@ export default function SettingsModal() {
                       {userInitials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-lg tracking-wide truncate">{userName}</p>
-                      <p className="text-gray-400 text-sm font-mono truncate">{userEmail}</p>
+                      <p className={`${textPrim} font-bold text-lg tracking-wide truncate`}>{userName}</p>
+                      <p className={`${textSec} text-sm font-mono truncate`}>{userEmail}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="inline-flex items-center gap-1 bg-[#22c55e]/10 text-[#22c55e] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-[#22c55e]/20">
                           <Shield size={10} /> Verified
                         </span>
-                        <span className="text-gray-600 text-[11px] font-mono">Joined {joinDate}</span>
+                        <span className="text-gray-500 text-[11px] font-mono">Joined {joinDate}</span>
                       </div>
                     </div>
                   </div>
@@ -146,24 +182,41 @@ export default function SettingsModal() {
                 <div className="space-y-2">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-3">Account</p>
 
-                  {[
-                    { icon: Bell, label: 'Notifications', sub: 'Email alerts for reports', hasChevron: true },
-                    { icon: Shield, label: 'Privacy & Security', sub: 'Manage your data', hasChevron: true },
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl bg-[#060B12]/60 border border-[#1E3550] hover:border-gray-600 transition-all duration-300 text-left group"
-                    >
-                      <div className="p-2.5 rounded-xl bg-[#0A111C] border border-[#1E3550] text-gray-500 group-hover:text-gray-300 transition-colors">
-                        <item.icon size={18} />
+                  <button
+                    onClick={() => setNotifications(!notificationsEnabled)}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl ${bgBase} border ${borderCls} ${hoverBorder} transition-all text-left cursor-pointer`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2.5 rounded-xl ${bgSurface} border ${borderCls} ${textSec}`}>
+                        <Bell size={18} />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-gray-300 font-semibold text-sm">{item.label}</p>
-                        <p className="text-gray-600 text-xs mt-0.5">{item.sub}</p>
+                      <div>
+                        <p className={`${textPrim} font-semibold text-sm`}>Notifications</p>
+                        <p className="text-gray-500 text-xs mt-0.5">Email alerts for reports</p>
                       </div>
-                      {item.hasChevron && <ChevronRight size={16} className="text-gray-600 group-hover:text-gray-400 transition-colors" />}
-                    </button>
-                  ))}
+                    </div>
+                    <div className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${notificationsEnabled ? 'bg-[#0A84FF]' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm ${notificationsEnabled ? 'left-5' : 'left-1'}`} />
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setPrivacy(!privacyEnabled)}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl ${bgBase} border ${borderCls} ${hoverBorder} transition-all text-left cursor-pointer`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2.5 rounded-xl ${bgSurface} border ${borderCls} ${textSec}`}>
+                        <Shield size={18} />
+                      </div>
+                      <div>
+                        <p className={`${textPrim} font-semibold text-sm`}>Privacy mode</p>
+                        <p className="text-gray-500 text-xs mt-0.5">Hide data history</p>
+                      </div>
+                    </div>
+                    <div className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${privacyEnabled ? 'bg-[#22c55e]' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm ${privacyEnabled ? 'left-5' : 'left-1'}`} />
+                    </div>
+                  </button>
 
                   <button
                     onClick={async () => { await signOut(); setSettingsOpen(false); }}
@@ -194,7 +247,7 @@ export default function SettingsModal() {
                 {/* Theme Toggle */}
                 <div>
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4">Theme</p>
-                  <div className="bg-[#060B12]/80 border border-[#1E3550] rounded-2xl p-6 space-y-6">
+                  <div className={`${bgBase} border ${borderCls} rounded-2xl p-6 space-y-6`}>
                     {/* Big toggle */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -205,10 +258,10 @@ export default function SettingsModal() {
                           {theme === 'dark' ? <Moon size={22} /> : <Sun size={22} />}
                         </div>
                         <div>
-                          <p className="text-white font-bold text-base tracking-wide">
+                          <p className={`${textPrim} font-bold text-base tracking-wide`}>
                             {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
                           </p>
-                          <p className="text-gray-500 text-sm mt-0.5">
+                          <p className={`${textSec} text-sm mt-0.5`}>
                             {theme === 'dark' ? 'Optimized for low-light environments' : 'Bright interface for daytime use'}
                           </p>
                         </div>
@@ -277,151 +330,87 @@ export default function SettingsModal() {
                 </div>
 
                 {/* Info */}
-                <div className="bg-[#0A84FF]/5 border border-[#0A84FF]/20 rounded-2xl p-4">
-                  <p className="text-gray-400 text-xs leading-relaxed">
+                <div className="bg-[#0A84FF]/5 border border-[#0A84FF]/20 rounded-2xl p-4 mt-8">
+                  <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
                     💡 Your theme preference is saved locally and will be restored automatically on your next visit.
                   </p>
                 </div>
               </motion.div>
             )}
 
-            {/* ═══════════════ CALCULATIONS TAB ═══════════════ */}
-            {activeTab === 'calculations' && (
+            {/* ═══════════════ SECURITY TAB ═══════════════ */}
+            {activeTab === 'security' && (
               <motion.div
-                key="calculations"
+                key="security"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
                 className="space-y-8"
               >
-                {/* Rooftop Dimensions */}
-                <section>
-                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4">🏠 Rooftop Dimensions</p>
-                  <div className="bg-[#060B12]/80 border border-[#1E3550] rounded-2xl p-5 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                {/* Password Change */}
+                <div>
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4">Password & Auth</p>
+                  <div className={`${bgBase} border ${borderCls} rounded-2xl p-6 space-y-4`}>
+                    <div className="flex flex-col gap-4">
                       <div>
-                        <label htmlFor="roofLength" className={labelCls}>Length (m)</label>
-                        <input id="roofLength" type="number" value={roofLength} min={1} max={200} step={0.5}
-                          onChange={(e) => updateSettings({ roofLength: parseFloat(e.target.value) || 0 })}
-                          className={inputCls} placeholder="e.g. 15" />
+                        <label className={labelCls}>Current Password</label>
+                        <input type="password" className={inputCls} placeholder="••••••••" />
                       </div>
-                      <div>
-                        <label htmlFor="roofWidth" className={labelCls}>Width (m)</label>
-                        <input id="roofWidth" type="number" value={roofWidth} min={1} max={200} step={0.5}
-                          onChange={(e) => updateSettings({ roofWidth: parseFloat(e.target.value) || 0 })}
-                          className={inputCls} placeholder="e.g. 10" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelCls}>New Password</label>
+                          <input type="password" className={inputCls} placeholder="Min 8 chars" />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Confirm New</label>
+                          <input type="password" className={inputCls} placeholder="Repeat password" />
+                        </div>
                       </div>
+                      <button className="bg-[#0A84FF] text-white text-xs font-bold py-2.5 px-6 rounded-xl self-start mt-2 hover:bg-[#0A84FF]/90 transition-all">
+                        Update Password
+                      </button>
                     </div>
-                    <div>
-                      <label htmlFor="roofArea" className={labelCls}>
-                        Total Roof Area (m²) {roofLength > 0 && roofWidth > 0 && (
-                          <span className="text-[#FF6B1A]">= {(roofLength * roofWidth).toFixed(1)} m²</span>
-                        )}
-                      </label>
-                      <input id="roofArea" type="number"
-                        value={roofLength > 0 && roofWidth > 0 ? roofLength * roofWidth : roofArea}
-                        min={5} max={10000} step={1}
-                        onChange={(e) => updateSettings({ roofArea: parseFloat(e.target.value) || 0 })}
-                        disabled={roofLength > 0 && roofWidth > 0}
-                        className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`}
-                        placeholder="Or enter total area" />
-                      <p className={hintCls}>Enter L×W above, or total area directly.</p>
-                    </div>
-                  </div>
-                </section>
 
-                {/* Panel Configuration */}
-                <section>
-                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4">☀️ Panel Configuration</p>
-                  <div className="bg-[#060B12]/80 border border-[#1E3550] rounded-2xl p-5 space-y-4">
-                    <div>
-                      <label htmlFor="panelDirection" className={labelCls}>Panel Direction</label>
-                      <select id="panelDirection" value={panelDirection}
-                        onChange={(e) => updateSettings({ panelDirection: e.target.value })}
-                        className={selectCls}
+                    <div className={`mt-6 pt-6 border-t ${borderSubtle} flex items-center justify-between`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2.5 rounded-xl ${bgSurface} border ${borderCls} ${textSec}`}>
+                          <Key size={18} />
+                        </div>
+                        <div>
+                          <p className={`${textPrim} font-semibold text-sm`}>Two-Factor Auth</p>
+                          <p className="text-gray-500 text-xs mt-0.5">Secure account with OTP</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setOtpEnabled(!otpEnabled)}
+                        className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${otpEnabled ? 'bg-[#0A84FF]' : 'bg-gray-400 dark:bg-gray-600'}`}
                       >
-                        {directionOptions.map((d) => (
-                          <option key={d.value} value={d.value}>{d.label}</option>
-                        ))}
-                      </select>
-                      <p className={hintCls}>South-facing is optimal in the Northern Hemisphere.</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="roofTilt" className={labelCls}>Roof Tilt (°)</label>
-                        <input id="roofTilt" type="number" value={roofTiltAngle} min={0} max={90} step={1}
-                          onChange={(e) => updateSettings({ roofTiltAngle: parseFloat(e.target.value) || 0 })}
-                          className={inputCls} />
-                        <p className={hintCls}>Flat = 0°, Ideal ≈ latitude</p>
-                      </div>
-                      <div>
-                        <label htmlFor="usability" className={labelCls}>Usability Factor</label>
-                        <input id="usability" type="number" value={usabilityFactor} min={0.1} max={1.0} step={0.05}
-                          onChange={(e) => updateSettings({ usabilityFactor: parseFloat(e.target.value) || 0.75 })}
-                          className={inputCls} />
-                        <p className={hintCls}>0.75 = 75% roof usable</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="panelEff" className={labelCls}>Panel Efficiency</label>
-                        <input id="panelEff" type="number" value={panelEfficiency} min={0.10} max={0.25} step={0.01}
-                          onChange={(e) => updateSettings({ panelEfficiency: parseFloat(e.target.value) || 0.20 })}
-                          className={inputCls} />
-                        <p className={hintCls}>Standard ≈ 0.20</p>
-                      </div>
-                      <div>
-                        <label htmlFor="panelWp" className={labelCls}>Panel Watt Peak (W)</label>
-                        <input id="panelWp" type="number" value={panelWattPeak} min={200} max={700} step={10}
-                          onChange={(e) => updateSettings({ panelWattPeak: parseFloat(e.target.value) || 400 })}
-                          className={inputCls} />
-                        <p className={hintCls}>Typical: 400W</p>
-                      </div>
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm ${otpEnabled ? 'left-5' : 'left-1'}`} />
+                      </button>
                     </div>
                   </div>
-                </section>
+                </div>
 
-                {/* Financial Parameters */}
-                <section>
-                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4">💰 Financial Parameters</p>
-                  <div className="bg-[#060B12]/80 border border-[#1E3550] rounded-2xl p-5 space-y-4">
-                    <div>
-                      <label htmlFor="currency" className={labelCls}>Currency</label>
-                      <select id="currency" value={currency}
-                        onChange={(e) => updateSettings({ currency: e.target.value })}
-                        className={selectCls}
-                      >
-                        <option value="INR">INR — Indian Rupee (₹)</option>
-                        <option value="USD">USD — US Dollar ($)</option>
-                        <option value="GBP">GBP — British Pound (£)</option>
-                        <option value="EUR">EUR — Euro (€)</option>
-                        <option value="AED">AED — UAE Dirham</option>
-                        <option value="SGD">SGD — Singapore Dollar</option>
-                      </select>
+                {/* Login Activity */}
+                <div>
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-4">Login Activity</p>
+                  <div className={`${bgBase} border ${borderCls} rounded-2xl p-4 space-y-3`}>
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                      <div className="flex items-center gap-3">
+                        <Laptop size={16} className="text-green-500" />
+                        <div>
+                          <p className={`${textPrim} text-xs font-bold`}>{deviceInfo} (Current)</p>
+                          <p className="text-gray-500 text-[10px]">Mumbai, India • Online now</p>
+                        </div>
+                      </div>
+                      <span className="text-green-500 text-[10px] font-bold uppercase tracking-wider">Active</span>
                     </div>
-                    <div>
-                      <label htmlFor="tariff" className={labelCls}>Electricity Tariff ({currency}/kWh)</label>
-                      <input id="tariff" type="number" value={electricityTariff} min={0.1} max={100} step={0.5}
-                        onChange={(e) => updateSettings({ electricityTariff: parseFloat(e.target.value) })}
-                        className={inputCls} />
-                      <p className={hintCls}>India avg: ₹8 · UK: £0.28 · UAE: 0.38 AED</p>
-                    </div>
-                    <div>
-                      <label htmlFor="costKwp" className={labelCls}>Installation Cost ({currency}/kWp)</label>
-                      <input id="costKwp" type="number" value={costPerKwp} min={1000} max={500000} step={1000}
-                        onChange={(e) => updateSettings({ costPerKwp: parseFloat(e.target.value) })}
-                        className={inputCls} />
-                      <p className={hintCls}>India: ₹55,000–70,000 · US: $1,800–2,500</p>
-                    </div>
+                    <button className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border ${borderCls} ${textSec} hover:${textPrim} hover:${bgSurface} transition-all text-xs font-bold`}>
+                      <RefreshCw size={14} />
+                      Log out from all other devices
+                    </button>
                   </div>
-                </section>
-
-                {/* Info */}
-                <div className="bg-[#FF6B1A]/5 border border-[#FF6B1A]/20 rounded-2xl p-4">
-                  <p className="text-gray-400 text-xs leading-relaxed">
-                    ⚡ Changes apply to your next calculation. Click a rooftop on the map to recalculate with these settings.
-                  </p>
                 </div>
               </motion.div>
             )}
@@ -429,7 +418,7 @@ export default function SettingsModal() {
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-5 border-t border-[#1E3550] shrink-0 bg-[#0A111C]/80">
+        <div className={`px-8 py-5 border-t ${borderCls} shrink-0 ${bgSurface}`}>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

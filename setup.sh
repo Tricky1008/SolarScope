@@ -138,6 +138,21 @@ sleep 4
 print_ok "Frontend running (PID $FRONTEND_PID)"
 
 # =============================================================================
+print_header "Android APK (Optional)"
+# =============================================================================
+
+echo -e "Do you want to build the Android APK now? (Requires Android Studio) [y/N]"
+read -r build_apk
+if [[ "$build_apk" =~ ^[Yy]$ ]]; then
+  cd frontend
+  print_step "Running Capacitor build and sync..."
+  npm run android:build
+  print_step "Opening Android Studio..."
+  npm run android:open
+  cd ..
+fi
+
+# =============================================================================
 print_header "Setup Complete!"
 # =============================================================================
 

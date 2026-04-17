@@ -1,11 +1,30 @@
 import axios from 'axios';
+import { Capacitor } from '@capacitor/core';
 import type { SolarAnalysis, BuildingFeature, City } from '../types';
 import { useAuthStore } from '../store/authStore';
 
+export const API_BASE_URL = Capacitor.isNativePlatform()
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://10.0.2.2:8000')
+  : (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? `http://${window.location.hostname}:8000` : ''));
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${API_BASE_URL}/api/v1`,
   timeout: 30000,
+  headers: { 'Content-Type': 'application/json' }
 });
+
+// Auto-retry on network error (for mobile offline resilience)
+api.interceptors.response.use(
+  res => res,
+  async (error) => {
+    if (error.config && !error.config._retry && error.code === 'ERR_NETWORK') {
+      error.config._retry = true;
+      await new Promise(r => setTimeout(r, 2000));
+      return api(error.config);
+    }
+    return Promise.reject(error);
+  }
+);
 
 api.interceptors.request.use(
   (config) => {
@@ -64,13 +83,22 @@ export const geocodeAddress = async (address: string) => {
   return data;
 };
 
+export const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
+  const { data } = await api.get('/reverse-geocode', { params: { lat, lon } });
+  return data.address;
+};
+
 export const fetchCities = async (): Promise<City[]> => {
   const { data } = await api.get('/cities');
   return data.cities;
 };
 
-export const generateReport = async (analysis: SolarAnalysis): Promise<Blob> => {
-  const { data } = await api.post('/solar/report', analysis, {
+export const generateReport = async (analysis: any): Promise<Blob> => {
+  const payload = {
+    ...analysis,
+    roof_area_m2: analysis.roof_area_m2 ?? analysis.total_roof_area_m2,
+  };
+  const { data } = await api.post('/solar/report', payload, {
     responseType: 'blob'
   });
   return data;
@@ -78,5 +106,40 @@ export const generateReport = async (analysis: SolarAnalysis): Promise<Blob> => 
 
 export const fetchIrradiance = async (lat: number, lon: number) => {
   const { data } = await api.get('/irradiance', { params: { lat, lon } });
+  return data;
+};
+
+
+// ── Image Analysis ────────────────────────────────────────
+
+import type { ImageAnalysisResult, RoofMaskData } from '../types';
+
+export const analyzeImage = async (
+  file: File,
+  lat: number,
+  lon: number,
+  tariff = 8,
+  costPerKwp = 60000,
+  currency = 'INR',
+): Promise<ImageAnalysisResult> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const { data } = await api.post('/solar/analyze-image', formData, {
+    params: { lat, lon, tariff, cost_per_kwp: costPerKwp, currency },
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  });
+  return data;
+};
+
+export const getMaskOnly = async (file: File): Promise<RoofMaskData> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const { data } = await api.post('/solar/mask-only', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  });
   return data;
 };

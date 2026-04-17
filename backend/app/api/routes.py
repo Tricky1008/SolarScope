@@ -15,7 +15,7 @@ from app.services.building_service import (
 )
 from app.services.irradiance_service import get_irradiance
 from app.services.report_service import generate_pdf_report
-from app.services.auth_service import sign_in, sign_up, sign_out, get_current_user, AuthCredentials, security
+from app.services.auth_service import sign_in, sign_up, sign_out, get_current_user, optional_get_current_user, AuthCredentials, security
 from fastapi.security import HTTPAuthorizationCredentials
 
 logger = logging.getLogger("solarscope.routes")
@@ -57,6 +57,15 @@ async def geocode(address: str = Query(..., description="Address to geocode")):
         raise HTTPException(status_code=404, detail="Address not found")
     return GeocodeResponse(**result)
 
+@router.get("/reverse-geocode")
+async def reverse_geocode(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180)
+):
+    from app.services.building_service import reverse_geocode_address
+    address = await reverse_geocode_address(lat, lon)
+    return {"address": address}
+
 
 # ── Buildings ──────────────────────────────────────────────────────────────
 
@@ -91,7 +100,7 @@ async def calculate_solar(
     lon: float = Query(..., ge=-180, le=180),
     roof_area_m2: Optional[float] = Query(None, ge=5, le=10000),
     request: SolarCalculationRequest = None,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(optional_get_current_user)
 ):
     """
     Main solar calculation endpoint.
@@ -123,7 +132,7 @@ async def calculate_solar_polygon(
     lat: float = Query(...),
     lon: float = Query(...),
     request: SolarCalculationRequest = None,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(optional_get_current_user)
 ):
     """Calculate solar potential from a GeoJSON polygon geometry."""
     if request is None:
@@ -137,7 +146,7 @@ async def calculate_solar_polygon(
 @router.post("/solar/batch")
 async def batch_calculate(
     batch_request: BatchCalculationRequest,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(optional_get_current_user)
 ):
     """Run solar calculation for multiple locations."""
     results = []
@@ -226,7 +235,7 @@ async def ml_predict(
 @router.post("/solar/report")
 async def generate_report(
     analysis: SolarAnalysisResponse,
-    user: dict = Depends(get_current_user)
+    user: dict = Depends(optional_get_current_user)
 ):
     """Generate and stream a PDF report for a solar analysis result."""
     pdf_bytes = generate_pdf_report(analysis)
@@ -256,3 +265,6 @@ async def list_cities():
             {"name": "Singapore", "lat": 1.3521, "lon": 103.8198},
         ]
     }
+
+
+

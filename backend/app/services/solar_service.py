@@ -229,3 +229,89 @@ async def run_solar_calculation(
         pvlib_kwh=pvlib_kwh,
         prediction_source=prediction_source,
     )
+
+
+async def calculate_from_model_analysis(
+    lat: float,
+    lon: float,
+    roof_data: dict,
+    tariff: float = 8.0,
+    cost_per_kwp: float = 65000,
+    currency: str = "INR",
+) -> dict:
+    """
+    Run the solar calculation pipeline using model-extracted roof data.
+    Replaces Steps 2–5 (OSM fetch + UTM projection + usability factor)
+    with the output of image_analysis_service.analyze_roof_image().
+    Steps 6–10 are identical to calculate_from_click().
+    """
+    # Step 6: NASA POWER irradiance (unchanged)
+    irradiance = await get_irradiance(lat, lon)
+
+    # Step 7: PVLib simulation using model-extracted area
+    usable_area   = roof_data["usable_area_m2"]
+    
+    # Orientation multiplier heuristic
+    orient = roof_data.get("roof_orientation", "mixed")
+    if orient in ["south-facing"]:
+        orient_mult = 1.0
+    elif orient in ["southeast-facing", "southwest-facing"]:
+        orient_mult = 0.95
+    elif orient in ["east-facing", "west-facing"]:
+        orient_mult = 0.85
+    elif orient in ["north-facing"]:
+        orient_mult = 0.70
+    else:
+        orient_mult = 0.90
+        
+    shading       = roof_data.get("shading_factor", 0.85)
+    effective_area = usable_area * orient_mult * shading
+
+    num_panels    = max(1, int(effective_area / PANEL_AREA_M2))
+    system_kwp    = num_panels * 0.4
+    pvout         = irradiance.pvout
+    annual_kwh    = round(system_kwp * pvout * PERFORMANCE_RATIO)
+
+    monthly_raw   = get_monthly_generation(annual_kwh)
+    from app.schemas.schemas import MonthlyGeneration
+    monthly_generation = [MonthlyGeneration(**m).model_dump() for m in monthly_raw]
+
+    # Step 8: Financial model (unchanged)
+    annual_savings    = round(annual_kwh * tariff)
+    installation_cost = round(system_kwp * cost_per_kwp)
+    payback_years     = round(installation_cost / annual_savings, 1) if annual_savings > 0 else 99
+    npv_25yr          = calculate_npv(annual_savings, installation_cost)
+
+    # Step 9: CO2 offset (unchanged)
+    co2_offset_kg_yr  = round(annual_kwh * CO2_FACTOR_KG_KWH)
+
+    # Step 10: XGBoost solar score (unchanged)
+    solar_score = calculate_solar_score(
+        irradiance.pvout, usable_area, irradiance.avg_temp, payback_years
+    )
+
+    return {
+        "id": str(uuid.uuid4()),
+        "lat": lat, "lon": lon,
+        "solar_score":        solar_score,
+        "total_roof_area_m2": roof_data["total_roof_area_m2"],
+        "usable_area_m2":     usable_area,
+        "num_panels":         num_panels,
+        "system_capacity_kwp": round(system_kwp, 2),
+        "annual_generation_kwh": annual_kwh,
+        "monthly_generation": monthly_generation,
+        "annual_savings":     annual_savings,
+        "installation_cost":  installation_cost,
+        "payback_years":      payback_years,
+        "npv_25yr":           round(npv_25yr),
+        "co2_annual_kg":      co2_offset_kg_yr,
+        "trees_equivalent":   max(1, int(co2_offset_kg_yr / TREES_PER_KG_CO2)),
+        "currency":           currency,
+        "roof_orientation":   roof_data.get("roof_orientation"),
+        "roof_tilt_degrees":  roof_data.get("roof_tilt_degrees"),
+        "shading_factor":     roof_data.get("shading_factor"),
+        "obstructions":       roof_data.get("obstructions", []),
+        "irradiance":         irradiance.model_dump(),
+        "created_at":         datetime.utcnow().isoformat(),
+        "prediction_source":  "model_image",
+    }

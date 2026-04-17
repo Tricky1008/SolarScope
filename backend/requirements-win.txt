@@ -63,6 +63,7 @@ prompt_toolkit==3.0.52
 propcache==0.4.1
 pvlib==0.10.5
 pycparser==3.0
+opencv-python==4.11.0.86
 pydantic==2.12.5
 pydantic-settings==2.3.0
 pydantic_core==2.41.5

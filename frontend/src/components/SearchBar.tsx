@@ -11,7 +11,7 @@ export default function SearchBar() {
   const [showCities, setShowCities] = useState(false);
   const [searchError, setSearchError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const { setMapCenter, reset } = useAppStore();
+  const { setMapCenter, setAnalysis, setCalculationError, setPanelOpen, setActiveFlow } = useAppStore();
 
   const { data: cities } = useQuery<City[]>({
     queryKey: ['cities'],
@@ -26,7 +26,10 @@ export default function SearchBar() {
     try {
       const result = await geocodeAddress(query);
       setMapCenter([result.lat, result.lon], 16);
-      reset();
+      setAnalysis(null);
+      setCalculationError(null);
+      setPanelOpen(false);
+      setActiveFlow('map');
       setQuery('');
       setShowCities(false);
     } catch {
@@ -39,7 +42,10 @@ export default function SearchBar() {
 
   const handleCitySelect = (city: City) => {
     setMapCenter([city.lat, city.lon], 14);
-    reset();
+    setAnalysis(null);
+    setCalculationError(null);
+    setPanelOpen(false);
+    setActiveFlow('map');
     setShowCities(false);
     setQuery('');
   };

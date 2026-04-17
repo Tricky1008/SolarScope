@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { SolarAnalysis, BuildingFeature } from '../types';
+import type { SolarAnalysis, BuildingFeature, AnalysisMode, ImageAnalysisResult } from '../types';
 
 interface RooftopConfig {
   roofLength: number;
@@ -29,8 +29,14 @@ interface AppState {
   // UI state
   isPanelOpen: boolean;
   isSettingsOpen: boolean;
-  activeFlow: 'choice' | 'map' | 'manual';
+  activeFlow: 'choice' | 'map' | 'manual' | 'landing';
   isReportOpen: boolean;
+
+  // Image analysis state
+  analysisMode: AnalysisMode;
+  uploadedImageSrc: string | null;
+  imageAnalysisResult: ImageAnalysisResult | null;
+  isImageAnalyzing: boolean;
 
 
   // User settings (financial)
@@ -61,8 +67,12 @@ interface AppState {
   setCalculationError: (e: string | null) => void;
   setPanelOpen: (v: boolean) => void;
   setSettingsOpen: (v: boolean) => void;
-  setActiveFlow: (v: 'choice' | 'map' | 'manual') => void;
+  setActiveFlow: (v: 'choice' | 'map' | 'manual' | 'landing') => void;
   setReportOpen: (v: boolean) => void;
+  setAnalysisMode: (v: AnalysisMode) => void;
+  setUploadedImageSrc: (v: string | null) => void;
+  setImageAnalysisResult: (v: ImageAnalysisResult | null) => void;
+  setImageAnalyzing: (v: boolean) => void;
 
   updateSettings: (s: Partial<RooftopConfig & { electricityTariff: number; costPerKwp: number; currency: string }>) => void;
   reset: () => void;
@@ -82,6 +92,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   isSettingsOpen: false,
   activeFlow: 'choice',
   isReportOpen: false,
+  analysisMode: 'map-click',
+  uploadedImageSrc: null,
+  imageAnalysisResult: null,
+  isImageAnalyzing: false,
 
 
   // Financial defaults
@@ -118,11 +132,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSettingsOpen: (v) => set({ isSettingsOpen: v }),
   setActiveFlow: (v) => set({ activeFlow: v }),
   setReportOpen: (v) => set({ isReportOpen: v }),
+  setAnalysisMode: (v) => set({ analysisMode: v }),
+  setUploadedImageSrc: (v) => set({ uploadedImageSrc: v }),
+  setImageAnalysisResult: (v) => set({ imageAnalysisResult: v }),
+  setImageAnalyzing: (v) => set({ isImageAnalyzing: v }),
 
   updateSettings: (s) => set(s),
   reset: () => set({
     analysis: null, isCalculating: false, calculationError: null, isPanelOpen: false,
-    activeFlow: 'choice'
+    analysisMode: 'map-click',
+    uploadedImageSrc: null, imageAnalysisResult: null, isImageAnalyzing: false,
   }),
 
 }));

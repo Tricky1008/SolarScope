@@ -39,7 +39,7 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
     story = []
 
     # Header
-    story.append(Paragraph("☀ SolarScope", title_style))
+    story.append(Paragraph("SolarScope", title_style))
     story.append(Paragraph("Rooftop Solar Potential Report", styles["Heading2"]))
     story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}", body_style))
     if analysis.address:
@@ -64,7 +64,7 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
         ("FONTSIZE", (0, 0), (-1, -1), 10),
         ("BACKGROUND", (0, 1), (-1, 1), LIGHT),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, SLATE),
+        ("GRID", (0, 0), (-1, -1), 0.5, black),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [LIGHT, white]),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
@@ -84,6 +84,17 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
         ["Solar Irradiance (GHI)", f"{analysis.irradiance.ghi:.2f} kWh/m²/day"],
         ["PVOUT", f"{analysis.irradiance.pvout:.0f} kWh/kWp/year"],
     ]
+    
+    if analysis.prediction_source == "model_image":
+        if analysis.roof_orientation:
+            spec_data.append(["Roof Orientation", analysis.roof_orientation.capitalize()])
+        if analysis.roof_tilt_degrees is not None:
+            spec_data.append(["Estimated Tilt", f"{analysis.roof_tilt_degrees:.1f}°"])
+        if analysis.shading_factor is not None:
+            spec_data.append(["Shading Factor", f"{(analysis.shading_factor * 100):.0f}%"])
+        if analysis.model_confidence is not None:
+            spec_data.append(["Detection Confidence", f"{(analysis.model_confidence * 100):.1f}%"])
+            
     spec_table = Table(spec_data, colWidths=[9*cm, 9*cm])
     spec_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), DARK),
@@ -91,7 +102,7 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [LIGHT, white]),
-        ("GRID", (0, 0), (-1, -1), 0.5, SLATE),
+        ("GRID", (0, 0), (-1, -1), 0.5, black),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))
@@ -115,7 +126,7 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [LIGHT, white]),
-        ("GRID", (0, 0), (-1, -1), 0.5, SLATE),
+        ("GRID", (0, 0), (-1, -1), 0.5, black),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))
@@ -126,8 +137,8 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
     story.append(Paragraph("Environmental Impact", h2_style))
     env_data = [
         ["Metric", "Value"],
-        ["CO₂ Avoided (Annual)", f"{analysis.co2_annual_kg:,.0f} kg"],
-        ["CO₂ Avoided (25 Years)", f"{analysis.co2_annual_kg * 25 / 1000:,.1f} tonnes"],
+        ["CO2 Avoided (Annual)", f"{analysis.co2_annual_kg:,.0f} kg"],
+        ["CO2 Avoided (25 Years)", f"{analysis.co2_annual_kg * 25 / 1000:,.1f} tonnes"],
         ["Equivalent Trees Planted", f"{analysis.trees_equivalent:,} trees/year"],
     ]
     env_table = Table(env_data, colWidths=[9*cm, 9*cm])
@@ -137,7 +148,7 @@ def generate_pdf_report(analysis: SolarAnalysisResponse) -> bytes:
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [LIGHT, white]),
-        ("GRID", (0, 0), (-1, -1), 0.5, SLATE),
+        ("GRID", (0, 0), (-1, -1), 0.5, black),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))

@@ -6,12 +6,29 @@
 
 ## 📸 What It Does
 
-1. **Click any rooftop** on an interactive dark-theme map
-2. The app fetches the building polygon from OpenStreetMap
-3. Pulls live solar irradiance data from NASA POWER API
-4. Runs the solar calculation pipeline (panels → kWh → ₹ savings → CO₂)
-5. Displays results in a slide-in dashboard panel
-6. Lets you download a professional PDF report
+9. **Click any rooftop** on the interactive map OR
+10. **Upload a drone/satellite image** for computer vision analysis
+11. Advanced AI model (SAM2) detects your exact roof boundaries
+12. Claude Vision assesses roof material, tilt, and obstacles
+13. App runs the solar simulation engine (PVLib)
+14. Displays complete insights in the slide-in dashboard
+
+---
+
+## 📱 Android APK (Dual Platform)
+
+SolarScope now supports a native Android application powered by Capacitor.js.
+
+### Build and Run APK
+```bash
+cd frontend
+npm run android:build
+npm run android:open
+# In Android Studio:
+# 1. Wait for Gradle sync
+# 2. Click Build > Build Bundle(s) / APK(s) > Build APK(s)
+# 3. Run on Emulator or Physical Device
+```
 
 ---
 
@@ -24,6 +41,8 @@
 | Docker Desktop | Latest | https://docker.com/get-started |
 | Git | Any | https://git-scm.com |
 
+> **Vision AI Extension**: The advanced image analysis pipeline requires `torch`, `opencv`, and `sam2`.
+> Please see the **Image Analysis Setup** section below if you intend to use this feature.
 > **Windows users**: Use WSL2 (Windows Subsystem for Linux) for best results.  
 > All commands below assume a bash/zsh terminal.
 
@@ -82,8 +101,16 @@ source venv/bin/activate          # Linux/Mac
 # Install all Python packages
 pip install -r requirements.txt
 
+# (Optional) If you want the Image AI Analysis features:
+pip install -r requirements_vision.txt
+./scripts/download_sam2.sh
+
 # Create environment config
 cp .env.example .env
+
+# Set your API Keys in .env (if using image AI):
+# MAPBOX_TOKEN=...
+# ANTHROPIC_API_KEY=...
 
 # Start the FastAPI server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

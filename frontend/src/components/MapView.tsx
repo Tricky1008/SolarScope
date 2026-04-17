@@ -2,9 +2,13 @@ import { useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppStore } from '../store/appStore';
-import { fetchNearbyBuildings, calculateSolar } from '../api/client';
+import { fetchNearbyBuildings, calculateSolar, reverseGeocode } from '../api/client';
 import type { BuildingFeature } from '../types';
 import SearchBar from './SearchBar';
+import AnalysisModeToggle from './AnalysisModeToggle';
+import ImageAnalysisPanel from './ImageAnalysisPanel';
+import { AnimatePresence } from 'framer-motion';
+import { GPSButton } from './GPSButton';
 
 // Fix Leaflet default icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -50,10 +54,26 @@ function ClickHandler() {
 
       try {
         const buildings = await fetchNearbyBuildings(lat, lng, 100);
-        setNearbyBuildings(buildings);
-        if (buildings.length > 0) {
-          setSelectedBuilding(buildings[0]);
+        let addressStr = '';
+        try {
+          addressStr = await reverseGeocode(lat, lng);
+        } catch (e) {
+          console.error(e);
         }
+
+        if (buildings.length === 0) {
+          const dummyBuilding = {
+            type: 'Feature',
+            geometry: { type: 'Polygon', coordinates: [[[lng, lat], [lng, lat], [lng, lat], [lng, lat]]] },
+            properties: { id: `dummy-${Date.now()}`, area_m2: 80, address: addressStr || 'Unknown location' }
+          };
+          buildings.push(dummyBuilding as any);
+        } else if (addressStr && (!buildings[0].properties.address || buildings[0].properties.address === 'Unknown address' || buildings[0].properties.address.trim() === '')) {
+          buildings[0].properties.address = addressStr;
+        }
+
+        setNearbyBuildings(buildings);
+        setSelectedBuilding(buildings[0]);
 
         // Priority: user-provided area > auto-detected from OSM
         const userArea = getEffectiveRoofArea();
@@ -102,15 +122,35 @@ export default function MapView() {
     setCalculationError, setPanelOpen,
     electricityTariff, costPerKwp, currency,
     usabilityFactor, panelEfficiency, panelWattPeak, roofTiltAngle, getEffectiveRoofArea,
+    analysisMode,
   } = useAppStore();
 
+  const isImageMode = analysisMode === 'image-upload';
+
   const handleBuildingClick = useCallback(async (building: BuildingFeature) => {
-    setSelectedBuilding(building);
     setCalculating(true);
     setCalculationError(null);
     setPanelOpen(true);
 
     const centroid = getCentroid(building.geometry.coordinates[0]);
+
+    if (!building.properties.address || building.properties.address === 'Unknown address' || building.properties.address.trim() === '') {
+      try {
+        const addressStr = await reverseGeocode(centroid[1], centroid[0]);
+        if (addressStr) {
+          // Create a new building object to trigger React state updates if needed
+          const updatedBuilding = { ...building, properties: { ...building.properties, address: addressStr } };
+          setSelectedBuilding(updatedBuilding);
+        } else {
+          setSelectedBuilding(building);
+        }
+      } catch (e) {
+        console.error(e);
+        setSelectedBuilding(building);
+      }
+    } else {
+      setSelectedBuilding(building);
+    }
 
     // Priority: user-provided area > building area
     const userArea = getEffectiveRoofArea();
@@ -139,12 +179,18 @@ export default function MapView() {
 
   return (
     <div className="flex-1 relative" role="application" aria-label="Solar analysis map">
-      {/* ── Persistent Search Bar Overlay ── */}
+      {/* ── Mode Toggle + Search Bar Overlay ── */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-[1000] pointer-events-auto">
-        <div className="bg-[#0A111C]/85 backdrop-blur-xl border border-[#1E3550] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-3">
-          <SearchBar />
+        <div className="bg-[#0A111C]/85 backdrop-blur-xl border border-[#1E3550] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-3 space-y-3">
+          <AnalysisModeToggle />
+          {!isImageMode && <SearchBar />}
         </div>
       </div>
+
+      {/* ── Image Upload Panel (covers map when active) ── */}
+      <AnimatePresence>
+        {isImageMode && <ImageAnalysisPanel onBack={() => { }} onSuccess={() => { }} />}
+      </AnimatePresence>
 
       <MapContainer
         center={[20.5937, 78.9629]}
@@ -153,10 +199,9 @@ export default function MapView() {
         zoomControl={true}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
           maxZoom={19}
-          className="dark-map-tiles"
         />
 
         <MapSync />
@@ -196,6 +241,11 @@ export default function MapView() {
           </p>
         </div>
       )}
+
+      <GPSButton onLocate={(lat, lng) => {
+        useAppStore.getState().setMapCenter([lat, lng], 18);
+        useAppStore.getState().setSelectedLocation(lat, lng);
+      }} />
     </div>
   );
 }
