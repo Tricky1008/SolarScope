@@ -89,6 +89,12 @@ export default function ScoreGauge({ score }: ScoreGaugeProps) {
           style={{ transition: 'stroke-dasharray 0.5s ease-out' }}
         />
       </svg>
+      {/* Center text showing percentage */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-xl font-bold text-white leading-none">
+          {Math.round(animatedScore)}%
+        </span>
+      </div>
     </div>
   );
 }

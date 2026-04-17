@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import StepsLine from "./StepsLine";
+import { Component as HorizonHero } from "./ui/horizon-hero-section";
+
 
 // ═══════════════════════════════════════════════════════════
 //  GLOBAL STYLES
@@ -615,8 +618,11 @@ export default function SolarScope() {
         </div>
       </nav>
 
-      {/* ══════════════ HERO ══════════════ */}
-      <section className="hero">
+      {/* ══════════════ HERO (Three.js immersive) ══════════════ */}
+      <HorizonHero onGetStarted={() => navigate("/app")} />
+
+      {/* ══════════════ LEGACY HERO REMOVED — kept below sections ══════════════ */}
+      {false && <section className="hero">
         <div className="hero-sunburst" />
         <div className="hr1 hero-ring" /><div className="hr2 hero-ring" />
         <div className="hr3 hero-ring" /><div className="hr4 hero-ring" />
@@ -740,7 +746,7 @@ export default function SolarScope() {
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ══════════════ MARQUEE ══════════════ */}
       <div className="mq-wrap">
@@ -767,8 +773,8 @@ export default function SolarScope() {
         </div>
 
         <div className="container pipeline-track">
-          <div className="pipe-line" />
-          <div className="pipe-dot-travel" />
+          <StepsLine />
+
 
           <div className="steps-grid">
             {[
